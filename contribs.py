@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 
 from argparse import ArgumentParser
@@ -32,35 +33,30 @@ def process_image(im, start_date, scale=1):
     return counts
 
 
-def create_commit(repo, commit_date, nth, author=None):
+def create_commit(repo, dir, commit_date, nth, author=None):
+    fname = os.path.join(dir, 'dummy.txt')
     dt = datetime.combine(commit_date, time(12, 0, tzinfo=timezone.utc)) + timedelta(minutes=nth)
-    with open('dummy.txt', 'w') as f:
+    with open(fname, 'w') as f:
         f.write(f"Commit number {nth + 1} for {commit_date.isoformat()}\n")
-    repo.index.add(['dummy.txt'])
+    repo.index.add([fname])
     repo.index.commit(f"Commit for {commit_date.isoformat()} #{nth + 1}",
                       author_date=dt,
                       author=author,
                       skip_hooks=True)
 
 
-def create_commits(counts, branch=None, reset_to=None, name=None, email=None, push=False):
-    committer = None
+def create_commits(dir, counts, name=None, email=None):
+    author = None
     if name is not None and email is not None:
         author = Actor(name, email)
-    with Repo() as repo:
-        if branch is not None:
-            repo.git.checkout(branch)
-        if reset_to is not None:
-            repo.head.reset(reset_to, working_tree=True)
+    with Repo.init(dir) as repo:
         for d in sorted(counts.keys()):
             n = counts[d]
             for i in range(n):
-                create_commit(repo, d, i, author)
-        if push:
-            repo.remote().push(kill_after_timeout=60, force_with_lease=True).raise_if_error()
+                create_commit(repo, dir, d, i, author)
 
 
-def main(image, start_date=None, num_commits=1, branch=None, reset_to=None, name=None, email=None, push=False):
+def main(image, dir='repo', start_date=None, num_commits=1, name=None, email=None):
     if start_date is None:
         start_date = date.today()
         while start_date.weekday() != 6:
@@ -69,18 +65,18 @@ def main(image, start_date=None, num_commits=1, branch=None, reset_to=None, name
     im = Image.open(image)
     im = convert_image(im)
     counts = process_image(im, start_date, scale=num_commits)
-    create_commits(counts, branch=branch, reset_to=reset_to, name=name, email=email, push=push)
+    path = os.path.join(os.getcwd(), dir)
+    os.makedirs(path, exist_ok=True)
+    create_commits(path, counts, name=name, email=email)
     return 0
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Generate GitHub contributions from an image")
     parser.add_argument("image", help="Input image file")
+    parser.add_argument("--dir", default="repo", help="Directory to create the repo in (default: repo)")
     parser.add_argument("--start-date", help="Start date (YYYY-MM-DD), defaults to 52 weeks ago on a Sunday")
     parser.add_argument("--num-commits", type=int, default=1, help="Number of commits per darkest pixel (default: 1)")
-    parser.add_argument("--branch", help="Branch to use for commits (default: current branch)")
-    parser.add_argument("--reset-to", help="Reset branch to this commit before starting (default: no reset)")
-    parser.add_argument("--push", action="store_true", help="Push branch after creating commits (default: don't push)")
     parser.add_argument("--name", help="Name to use for commits (if set, must also set email)")
     parser.add_argument("--email", help="Email to use for commits (if set, must also set name)")
     args = parser.parse_args()
