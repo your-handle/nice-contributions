@@ -19,4 +19,4 @@ jobs:
         cache: pip
     - run: pip install -r requirements.txt
     - run: git fetch --tags
-    - run: python contribs.py your-handle.png --reset-to base --name "${{ vars.COMMITTER_NAME }}" --email "${{ vars.COMMITTER_EMAIL }}" --push
+    - run: python contribs.py your-handle.png --reset-to base --num-commits "${{ vars.NUM_COMMITS }}"  --name "${{ vars.COMMITTER_NAME }}" --email "${{ vars.COMMITTER_EMAIL }}" --push
