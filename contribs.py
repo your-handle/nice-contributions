@@ -32,21 +32,21 @@ def process_image(im, start_date, scale=1):
     return counts
 
 
-def create_commit(repo, commit_date, nth, committer=None):
+def create_commit(repo, commit_date, nth, author=None):
     dt = datetime.combine(commit_date, time(12, 0, tzinfo=timezone.utc)) + timedelta(minutes=nth)
     with open('dummy.txt', 'w') as f:
         f.write(f"Commit number {nth + 1} for {commit_date.isoformat()}\n")
     repo.index.add(['dummy.txt'])
     repo.index.commit(f"Commit for {commit_date.isoformat()} #{nth + 1}",
                       author_date=dt,
-                      committer=committer,
+                      author=author,
                       skip_hooks=True)
 
 
 def create_commits(counts, branch=None, reset_to=None, name=None, email=None, push=False):
     committer = None
     if name is not None and email is not None:
-        committer = Actor(name, email)
+        author = Actor(name, email)
     with Repo() as repo:
         if branch is not None:
             repo.git.checkout(branch)
@@ -55,7 +55,7 @@ def create_commits(counts, branch=None, reset_to=None, name=None, email=None, pu
         for d in sorted(counts.keys()):
             n = counts[d]
             for i in range(n):
-                create_commit(repo, d, i, committer)
+                create_commit(repo, d, i, author)
         if push:
             repo.remote().push(kill_after_timeout=60, force_with_lease=True).raise_if_error()
 
