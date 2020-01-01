@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 from argparse import ArgumentParser
 from PIL import Image, ImageOps
 from datetime import datetime, date, time, timezone, timedelta
@@ -55,7 +57,7 @@ def create_commits(counts, branch=None, reset_to=None, name=None, email=None, pu
             for i in range(n):
                 create_commit(repo, d, i, committer)
         if push:
-            repo.remote().push()
+            repo.remote().push().raise_if_error()
 
 
 def main(image, start_date=None, num_commits=1, branch=None, reset_to=None, name=None, email=None, push=False):
@@ -68,11 +70,7 @@ def main(image, start_date=None, num_commits=1, branch=None, reset_to=None, name
     im = convert_image(im)
     counts = process_image(im, start_date, scale=num_commits)
     create_commits(counts, branch=branch, reset_to=reset_to, name=name, email=email, push=push)
-
-    #for d in sorted(counts.keys()):
-    #    print(f"{d.isoformat()} {counts[d]}")
-
-
+    return 0
 
 
 if __name__ == "__main__":
@@ -91,4 +89,4 @@ if __name__ == "__main__":
     if args.start_date:
         start_date = date.fromisoformat(args.start_date)
 
-    main(**vars(args))
+    sys.exit(main(**vars(args)))
