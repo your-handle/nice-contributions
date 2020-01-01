@@ -1,0 +1,22 @@
+name: Update Contributions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-contribs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-python@v6.0.0
+      with:
+        python-version: "3.12"
+        cache: pip
+    - run: pip install -r requirements.txt
+    - run: git fetch --tags
+    - run: python contribs.py your-handle.png --reset-to base --name "${{ vars.COMMITTER_NAME }}" --email "${{ vars.COMMITTER_EMAIL }}" --push
