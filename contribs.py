@@ -57,7 +57,7 @@ def create_commits(counts, branch=None, reset_to=None, name=None, email=None, pu
             for i in range(n):
                 create_commit(repo, d, i, committer)
         if push:
-            repo.remote().push().raise_if_error()
+            repo.remote().push(kill_after_timeout=60, force_with_lease=True).raise_if_error()
 
 
 def main(image, start_date=None, num_commits=1, branch=None, reset_to=None, name=None, email=None, push=False):
