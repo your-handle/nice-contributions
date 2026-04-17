@@ -1,0 +1,26 @@
+name: Repo Activity
+# Hopefully GitHub will consider this as "activity" on the repo, and not disable actions after 60 days.
+# If not, we may need to use a repo scoped PAT instead of the default GITHUB_TOKEN,
+# see https://stackoverflow.com/questions/57921401/push-to-origin-from-github-action/58393457#58393457
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-activity:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: Update dummy file
+      run: date +%s >> dummy_file.txt
+    - name: Commit changes
+      run: |
+        git config --global user.name 'Your Handle'
+        git config --global user.email 'yourhandledoorhandle@gmail.com'
+        git commit -am "Automated activity"
+        git push
